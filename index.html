@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.5/css/bootstrap.css' />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100vw;
+      height: 100vh;
+
+    }
+
+    #game {
+      border: 1px solid #999;
+      height: 90%;
+      padding: 0;
+
+      position: relative;
+    }
+
+    .bg-color1 {
+      background-color: #ff5959;
+    }
+
+    .bg-color2 {
+      background-color: #facf5a;
+    }
+
+    .bg-color3 {
+      background-color: #49beb7;
+    }
+
+    .bg-color4 {
+      background-color: #085f63;
+    }
+
+    .ball-1 {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #ff5959;
+      color: white;
+      border: 1px solid black;
+
+      line-height: 100px;
+      font-size: 3rem;
+    }
+
+    .ball-2 {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #facf5a;
+      color: white;
+      border: 1px solid black;
+
+      line-height: 80px;
+      font-size: 2rem;
+    }
+
+    .ball-3 {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #49beb7;
+      color: white;
+      border: 1px solid black;
+
+      line-height: 60px;
+    }
+
+    .ball-4 {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #085f63;
+      color: white;
+      border: 1px solid black;
+
+      line-height: 40px;
+    }
+
+    .target {
+      position: absolute;
+
+      text-align: center;
+
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #game-menu {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #0002;
+      padding: 16px 32px 12px 32px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    #game-menu label,
+    #game-menu input[type="button"] {
+      margin-bottom: 0;
+      font-size: 1.1rem;
+    }
+
+    #game-menu input[type="button"] {
+      margin-left: 16px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    #score-board {
+      position: fixed;
+      bottom: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px #0002;
+      padding: 12px 32px;
+      font-size: 1.2rem;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      min-width: 220px;
+      justify-content: center;
+    }
+
+    #score-board p {
+      margin: 0;
+      font-weight: bold;
+      color: #085f63;
+      letter-spacing: 1px;
+    }
+
+    #score-board span {
+      color: #ff5959;
+      font-size: 1.3em;
+      margin-left: 4px;
+    }
+
+    #score-board.in-game {
+      position: absolute;
+      left: 50%;
+      bottom: 0px;
+      transform: translateX(-50%);
+      z-index: 20;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="game-menu" class="btn-group">
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+    <label class="btn btn-outline-primary" for="btnradio1">Easy</label>
+
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+    <label class="btn btn-outline-primary" for="btnradio2">Normal</label>
+
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
+    <label class="btn btn-outline-primary" for="btnradio3">Hard</label>
+
+    <input type="button" value="START" id="btn-start">
+
+  </div>
+
+
+  <div id="score-board">
+    <p>分數: <span id="text-score">0</span></p>
+    <p>剩餘: <span id="text-time">0</span></p>
+  </div>
+
+  <div id="game" class="container">
+    <div class="row w-100 h-100 g-0 align-items-center position-absolute">
+      <div class="place col-4 h-25 bg-color1 align-self-end"></div>
+      <div class="place col-3 h-25 bg-color2"></div>
+      <div class="place col-3 h-25 bg-color3"></div>
+      <div class="place col-2 h-25 bg-color4 align-self-start"></div>
+    </div>
+
+  </div>
+
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script>
+
+    // 遊戲設定
+    const DROP_SLOW = 3
+    const DROP_NORMAL = 2
+    const DROP_FAST = 1
+    const GAME_TIME = 60
+    const LIFE_TIME = 5
+
+    const game_width = $('#game').width()
+    const game_height = $('#game').height()
+    const ball_catogory = ['ball-1', 'ball-2', 'ball-3', 'ball-4']
+    const score_list = [1, 2, 5, 10]
+    let ballTimers = [];
+
+    // 分數
+    let score = 0
+    // 剩餘時間
+    let timeLeft = 0
+    // 計時器
+    let timer = 0
+
+    // 拖曳物件
+    let draggingObj = null;
+
+    // 球落下
+    const computeDropTime = (height) => {
+      return Math.sqrt(height / 50)
+    }
+
+    // 球落下
+    const dropBall = () => {
+
+      const randomIndex = Math.floor(Math.random() * ball_catogory.length)
+      const randomClass = ball_catogory[randomIndex]
+
+      // 設定每種球的分數（依你的規則）
+      const ball_score = score_list[randomIndex]
+
+      const ball = $('<div class="target"></div>')
+        .addClass(randomClass)
+        .data('typeIdx', randomIndex)
+        .data('score', ball_score)
+
+      $('#game').append(ball)
+
+      // 初始位置
+      const ball_size = parseInt(ball.css('width'))
+      const drop_height = game_height - ball_size
+
+      const initial_x = Math.floor(Math.random() * (game_width - ball_size));
+
+      gsap.set(ball, {
+        x: initial_x,
+        y: 0
+      })
+
+      // 倒數器
+      let lifeTimeLeft = LIFE_TIME
+      ball.text(lifeTimeLeft)
+      const ballTimer = setInterval(() => {
+        lifeTimeLeft--
+        if (lifeTimeLeft >= 0) {
+          ball.text(lifeTimeLeft)
+        }
+        if (lifeTimeLeft <= 0) {
+          clearInterval(ballTimer)
+          ball.fadeOut(200, function () {
+            // 懲罰
+            console.log('ball_score 減分: ', ball_score)
+
+            score -= ball_score
+            console.log('減分後: ', score)
+            $('#text-score').text(score);
+            //
+            $(this).remove()
+          })
+        }
+      }, 1000)
+      ball.data('timer', ballTimer)
+
+      ballTimers.push(ballTimer);
+
+      gsap
+        .to(ball, {
+          y: drop_height,
+          duration: computeDropTime(drop_height),
+          ease: "bounce.out"
+        })
+    }
+
+    // 遊戲開始
+    $('#btn-start').on('click', function () {
+      // 隱藏按鈕
+      $('.btn-group').hide()
+
+      //
+      $('#score-board').addClass('in-game');
+
+      // 根據難度設定球落下速度
+      let drop_interval = DROP_SLOW; // 預設 easy
+      if ($('#btnradio2').is(':checked')) {
+        drop_interval = DROP_NORMAL; // normal
+      } else if ($('#btnradio3').is(':checked')) {
+        drop_interval = DROP_FAST; // hard
+      }
+
+      // 重設分數
+      score = 0
+      $('#text-score').text(score)
+      // 重設遊戲時間
+      timeLeft = GAME_TIME
+      $('#text-time').text(timeLeft)
+
+      //
+      const _this = this
+      timer = setInterval(function () {
+        // 倒數
+        timeLeft--
+        $('#text-time').text(timeLeft)
+
+        // 時間到
+        if (timeLeft == 0) {
+          // 停止計時器
+          clearInterval(timer)
+          clearInterval(drop_timer)
+
+          // 停止所有球的倒數計時器
+          ballTimers.forEach(id => clearInterval(id));
+          ballTimers = []; // 清空
+
+          // 顯示開始按鈕
+          $('.btn-group').show()
+
+          // 清空區域
+          $('.target').remove()
+
+          //
+          draggingObj = null
+
+          // 遊戲結束時移回畫面中央
+          $('#score-board').removeClass('in-game');
+        }
+      }, 1000)
+
+      let drop_timer = setInterval(dropBall, drop_interval * 1000)
+      dropBall()
+    })
+
+    //
+    $('#game').on('mousedown', '.target', function (e) {
+      draggingObj = $(this)
+
+      // 取得滑鼠點擊位置與球左上角的距離
+      draggingObj.data('offsetX', e.clientX - this.getBoundingClientRect().left)
+      draggingObj.data('offsetY', e.clientY - this.getBoundingClientRect().top)
+
+      // 顯示在最上層
+      draggingObj.css('z-index', 999)
+
+      //
+      gsap.killTweensOf(draggingObj)
+    })
+
+    //
+    $(document).on('mousemove', function (e) {
+      if (!draggingObj) return
+
+      // 計算新位置（相對於 container）
+      const gameRect = $('#game')[0].getBoundingClientRect()
+      let x = e.clientX - gameRect.left - draggingObj.data('offsetX')
+      let y = e.clientY - gameRect.top - draggingObj.data('offsetY')
+
+      // 限制在 container 內
+      const ball_size = parseInt(draggingObj.css('width'))
+      x = Math.max(0, Math.min(x, game_width - ball_size))
+      y = Math.max(0, Math.min(y, game_height - ball_size))
+
+      gsap.set(draggingObj[0], { x, y })
+    })
+
+    //
+    $(document).on('mouseup', function () {
+      if (!draggingObj) return
+
+      // 取得 ball 和 place 的位置
+      console.log(Number(draggingObj.data('typeIdx')))
+      const ball_score = draggingObj.data('score')
+      const objRect = draggingObj[0].getBoundingClientRect();
+      const placeRect = $('.place')[draggingObj.data('typeIdx')].getBoundingClientRect();
+
+      // 判斷是否有重疊
+      const isInside =
+        objRect.left >= placeRect.left &&
+        objRect.right <= placeRect.right &&
+        objRect.top >= placeRect.top &&
+        objRect.bottom <= placeRect.bottom;
+
+      if (isInside) {
+        // 球消失
+        clearInterval(draggingObj.data('timer'))
+        draggingObj.remove();
+        // 增加分數
+        console.log('ball_score 加分: ', ball_score)
+        score += ball_score;
+        console.log('加分後: ', score)
+        $('#text-score').text(score);
+      } else {
+
+        draggingObj.css('z-index', '');
+        // 取得目前 y
+        const currentY = gsap.getProperty(draggingObj[0], 'y');
+        // 重新啟動動畫，從目前 y 掉到底部
+        const ball_size = parseInt(draggingObj.css('width'))
+        const drop_height = game_height - ball_size
+
+        gsap.to(draggingObj[0], {
+          y: drop_height,
+          duration: computeDropTime(drop_height - currentY), // 依剩餘距離調整動畫時間
+          ease: "bounce.out"
+        });
+      }
+      draggingObj = null; // 拖曳結束，重置
+    });
+  </script>
+</body>
+
+</html>
