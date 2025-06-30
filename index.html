@@ -165,6 +165,23 @@
       transform: translateX(-50%);
       z-index: 20;
     }
+
+    .score-popup {
+      position: absolute;
+      z-index: 1000;
+      font-size: 2rem;
+      font-weight: bold;
+      pointer-events: none;
+      /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); */
+    }
+
+    .score-popup.positive {
+      color: #28a745;
+    }
+
+    .score-popup.negative {
+      color: #dc3545;
+    }
   </style>
 </head>
 
@@ -228,6 +245,35 @@
     // 拖曳物件
     let draggingObj = null;
 
+    // 顯示分數變化動畫
+    const showScorePopup = (x, y, scoreChange) => {
+      const popup = $('<div class="score-popup"></div>')
+
+      if (scoreChange > 0) {
+        popup.addClass('positive').text(`+${scoreChange}`)
+      } else {
+        popup.addClass('negative').text(`${scoreChange}`)
+      }
+
+      popup.css({
+        left: x + 'px',
+        top: y + 'px'
+      })
+
+      $('#game').append(popup)
+
+      //
+      gsap.to(popup, {
+        y: -100,
+        opacity: 0,
+        duration: 3,
+        ease: "power2.out",
+        onComplete: function () {
+          popup.remove()
+        }
+      })
+    }
+
     // 球落下
     const computeDropTime = (height) => {
       return Math.sqrt(height / 50)
@@ -270,6 +316,13 @@
         }
         if (lifeTimeLeft <= 0) {
           clearInterval(ballTimer)
+
+          // 取得球的位置用於顯示分數動畫
+          const ballRect = ball[0].getBoundingClientRect()
+          const gameRect = $('#game')[0].getBoundingClientRect()
+          const popupX = ballRect.left - gameRect.left + ballRect.width / 2
+          const popupY = ballRect.top - gameRect.top + ballRect.height / 2
+
           ball.fadeOut(200, function () {
             // 懲罰
             console.log('ball_score 減分: ', ball_score)
@@ -277,6 +330,10 @@
             score -= ball_score
             console.log('減分後: ', score)
             $('#text-score').text(score);
+
+            // 顯示扣分動畫
+            showScorePopup(popupX, popupY, -ball_score)
+
             //
             $(this).remove()
           })
@@ -402,6 +459,12 @@
         objRect.bottom <= placeRect.bottom;
 
       if (isInside) {
+        // 取得球的位置用於顯示分數動畫
+        const ballRect = draggingObj[0].getBoundingClientRect()
+        const gameRect = $('#game')[0].getBoundingClientRect()
+        const popupX = ballRect.left - gameRect.left + ballRect.width / 2
+        const popupY = ballRect.top - gameRect.top + ballRect.height / 2
+
         // 球消失
         clearInterval(draggingObj.data('timer'))
         draggingObj.remove();
@@ -410,6 +473,9 @@
         score += ball_score;
         console.log('加分後: ', score)
         $('#text-score').text(score);
+
+        // 顯示加分動畫
+        showScorePopup(popupX, popupY, ball_score)
       } else {
 
         draggingObj.css('z-index', '');
