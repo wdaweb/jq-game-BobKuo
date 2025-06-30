@@ -18,6 +18,7 @@
       width: 100vw;
       height: 100vh;
 
+      background-color: black;
     }
 
     #game {
@@ -26,6 +27,11 @@
       padding: 0;
 
       position: relative;
+
+      background-image: url('./pics/park.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
     }
 
     .bg-color1 {
@@ -47,47 +53,75 @@
     .ball-1 {
       width: 100px;
       height: 100px;
-      border-radius: 50%;
-      background: #ff5959;
+      /* border-radius: 50%; */
+      /* background: #ff5959; */
       color: white;
-      border: 1px solid black;
+      /* border: 1px solid black; */
 
       line-height: 100px;
       font-size: 3rem;
+
+      background-image: url('pics/plastic.png');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+
+      background-color: transparent;
     }
 
     .ball-2 {
       width: 80px;
       height: 80px;
-      border-radius: 50%;
-      background: #facf5a;
+      /* border-radius: 50%; */
+      /* background: #facf5a; */
       color: white;
-      border: 1px solid black;
+      /* border: 1px solid black; */
 
       line-height: 80px;
       font-size: 2rem;
+
+      background-image: url('pics/bottle.png');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+
+      background-color: transparent;
     }
 
     .ball-3 {
       width: 60px;
       height: 60px;
-      border-radius: 50%;
-      background: #49beb7;
+      /* border-radius: 50%; */
+      /* background: #49beb7; */
       color: white;
-      border: 1px solid black;
+      /* border: 1px solid black; */
 
       line-height: 60px;
+
+      background-image: url('pics/glass.png');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+
+      background-color: transparent;
     }
 
     .ball-4 {
       width: 40px;
       height: 40px;
-      border-radius: 50%;
-      background: #085f63;
+      /* border-radius: 50%; */
+      /* background: #085f63; */
       color: white;
-      border: 1px solid black;
+      /* border: 1px solid black; */
 
       line-height: 40px;
+
+      background-image: url('pics/paper.png');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+
+      background-color: transparent;
     }
 
     .target {
@@ -182,6 +216,44 @@
     .score-popup.negative {
       color: #dc3545;
     }
+
+    .place {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 分數越高的區域越小 */
+    .place[data-type="0"] {
+      width: 180px;
+      height: 180px;
+    }
+
+    .place[data-type="1"] {
+      width: 150px;
+      height: 150px;
+    }
+
+    .place[data-type="2"] {
+      width: 120px;
+      height: 120px;
+    }
+
+    .place[data-type="3"] {
+      width: 90px;
+      height: 90px;
+    }
+
+    .place img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
   </style>
 </head>
 
@@ -208,13 +280,14 @@
   </div>
 
   <div id="game" class="container">
-    <div class="row w-100 h-100 g-0 align-items-center position-absolute">
-      <div class="place col-4 h-25 bg-color1 align-self-end"></div>
-      <div class="place col-3 h-25 bg-color2"></div>
-      <div class="place col-3 h-25 bg-color3"></div>
-      <div class="place col-2 h-25 bg-color4 align-self-start"></div>
-    </div>
-
+    <!-- <div class="place col-4 h-25 bg-color1 align-self-end"></div>
+    <div class="place col-3 h-25 bg-color2"></div>
+    <div class="place col-3 h-25 bg-color3"></div>
+    <div class="place col-2 h-25 bg-color4 align-self-start"></div> -->
+    <div class="place" data-type="0"><img src="./pics/red.png"></div>
+    <div class="place" data-type="1"><img src="./pics/yellow.png"></div>
+    <div class="place" data-type="2"><img src="./pics/green.png"></div>
+    <div class="place" data-type="3"><img src="./pics/blue.png"></div>
   </div>
 
 
@@ -244,6 +317,54 @@
 
     // 拖曳物件
     let draggingObj = null;
+
+    // 隨機排列place位置
+    const randomizePlacePositions = () => {
+      const places = $('.place');
+      const gameWidth = $('#game').width();
+      const gameHeight = $('#game').height();
+      const margin = 20;
+
+      places.each(function (index) {
+        const place = $(this);
+        const placeWidth = place.outerWidth();
+        const placeHeight = place.outerHeight();
+
+        let x, y;
+        let attempts = 0;
+        let overlap = true;
+
+        // 嘗試找到不重疊的位置
+        while (overlap && attempts < 50) {
+          x = Math.random() * (gameWidth - placeWidth - margin * 2) + margin;
+          y = Math.random() * (gameHeight - placeHeight - margin * 2) + margin;
+
+          overlap = false;
+
+          // 檢查是否與其他place重疊
+          places.slice(0, index).each(function () {
+            const otherPlace = $(this);
+            const otherX = parseFloat(otherPlace.css('left'));
+            const otherY = parseFloat(otherPlace.css('top'));
+            const otherWidth = otherPlace.outerWidth();
+            const otherHeight = otherPlace.outerHeight();
+
+            if (Math.abs(x - otherX) < (placeWidth + otherWidth) / 2 + margin &&
+              Math.abs(y - otherY) < (placeHeight + otherHeight) / 2 + margin) {
+              overlap = true;
+              return false; // 跳出each循環
+            }
+          });
+
+          attempts++;
+        }
+
+        place.css({
+          left: x + 'px',
+          top: y + 'px'
+        });
+      });
+    }
 
     // 顯示分數變化動畫
     const showScorePopup = (x, y, scoreChange) => {
@@ -356,6 +477,9 @@
       // 隱藏按鈕
       $('.btn-group').hide()
 
+      // 隨機排列place位置
+      randomizePlacePositions()
+
       //
       $('#score-board').addClass('in-game');
 
@@ -448,8 +572,10 @@
       // 取得 ball 和 place 的位置
       console.log(Number(draggingObj.data('typeIdx')))
       const ball_score = draggingObj.data('score')
+      const ball_type = draggingObj.data('typeIdx')
       const objRect = draggingObj[0].getBoundingClientRect();
-      const placeRect = $('.place')[draggingObj.data('typeIdx')].getBoundingClientRect();
+      const targetPlace = $(`.place[data-type="${ball_type}"]`)[0];
+      const placeRect = targetPlace.getBoundingClientRect();
 
       // 判斷是否有重疊
       const isInside =
